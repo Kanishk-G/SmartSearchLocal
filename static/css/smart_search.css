@@ -1,0 +1,87 @@
+body {
+    background-color: #4e4e4e;
+    background-size: 1488px 1080px;;
+  }
+
+.logo {
+    width: 100px;
+    padding-right: 20px;
+}
+
+.header {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.title {
+    padding-top: 20px;
+    padding-bottom: 15px;
+    font-family: "Calibri";
+    font-weight: 800;
+    font-size: 16pt;
+    color: #000000;
+}
+
+.send_cont {
+    padding-left: 10px;
+}
+
+.messages {
+    height: 75%;
+}
+
+.usr_title,.ai_title {
+    color: #FFFFFF
+}
+
+.card-header.user {
+    background-color: #d80000!important;
+}
+
+.card-header, .card-footer{
+    background-color: #FFFFFF!important;
+}
+
+.card-header.user{
+    text-align: right;
+}
+
+.card-header.ai {
+    background-color: #000079!important;;
+}
+
+.user_icon, .ai_icon {
+    width: 70px;
+    border-radius: 50%!important;
+}
+
+.icon {
+    padding-left: 10px;
+}
+
+.ai-icon {
+    padding-right: 10px;
+}
+
+.typewriter h1 {
+  overflow: hidden; /* Ensures the content is not revealed until the animation */
+  border-right: .15em solid orange; /* The typwriter cursor */
+  white-space: nowrap; /* Keeps the content on a single line */
+  margin: 0 auto; /* Gives that scrolling effect as the typing happens */
+  letter-spacing: .15em; /* Adjust as needed */
+  animation: 
+    typing 3.5s steps(40, end),
+    blink-caret .75s step-end infinite;
+}
+
+/* The typing effect */
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+/* The typewriter cursor effect */
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: orange; }
+}

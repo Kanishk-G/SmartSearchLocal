@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Smart Search</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="/static/css/smart_search.css"
+    />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script
+      src="https://kit.fontawesome.com/a9224d67a3.js"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div class="container-fluid h-100">
+      <div class="row justify-content-center h-100">
+        <div class="col-md-8 col-xl-6">
+          <div class="card vh-100 overflow-hidden">
+            <div class="card-header">
+              <div class="d-flex bd-highlight justify-content-center">
+                <div class="header_icon">
+                  <img src="/static/axa_logo.png" class="logo" />
+                </div>
+                <div class="title">
+                  <span><b>Smart Search</b></span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              id="chatArea"
+              class="card-body messages scrollable overflow-auto"
+            >
+              <div class="d-flex justify-content-start mb-4">
+                <div class="ai-icon align-self-end">
+                  <img src="/static/axa_bot.png" class="rounded-circle ai_icon" />
+                </div>
+                <div class="card message_container">
+                  <div class="card-header ai">
+                    <span class="ai_title">ASSISTANT</span>
+                  </div>
+                  <div class="card-body">
+                    <span class="ai_msg">Hi, how can I help you?</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              <form id="inputArea" class="input-group">
+                <input
+                  type="text"
+                  id="userInput"
+                  name="user_input"
+                  placeholder="Ask me a question..."
+                  autocomplete="off"
+                  class="form-control input_box"
+                  required
+                />
+                <div class="input-group-append send_cont">
+                  <button type="submit" id="sendButton" class="btn send_button">
+                    <i class="fas fa-location-arrow button_icon"></i>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      $(document).ready(function () {
+        var botAnswer,
+          inc,
+          incA,
+          id = 0;
+        var userInput = "";
+        var currentSource = "";
+        var reader;
+
+        $("#inputArea").on("submit", function (event) {
+          var input = $("#userInput").val();
+          userInput = $("#userInput").val();
+          var humanMessage =
+            '<div class="d-flex justify-content-end mb-4"><div class="card message_container"><div class="card-header user"><span class="usr_title">USER</span></div><div class="card-body"><span class="usr_msg">' +
+            input +
+            // '</span></div></div><div class="icon align-self-end"><img src="/static/person.png" class="rounded-circle user_icon"/></div></div>'; if you want usericon
+            "</span></div></div></div>";
+
+          $("#userInput").val("");
+          $("#chatArea").append(humanMessage);
+
+          sendMessage();
+
+          event.preventDefault();
+        });
+
+        async function sendMessage() {
+          var response = await fetch("/get", {
+            method: "POST",
+            body: JSON.stringify({ user_input: userInput }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          var reader = response.body.getReader();
+          var decoder = new TextDecoder("utf-8");
+          id += 1;
+          var aiMessage =
+            '<div class="d-flex justify-content-start mb-4"><div class="ai-icon align-self-end"><img src="/static/axa_bot.png" class="rounded-circle ai_icon"/></div><div class="card message_container"><div class="card-header ai"><span class="ai_title">BOT</span></div><div class="card-body"><span class="ai_msg typewriter" id="botResponse' +
+            id +
+            '"></span></div></div></div>';
+          $("#chatArea").append($.parseHTML(aiMessage));
+
+          reader.read().then(function processResult(result) {
+            if (result.done) return;
+            scrollToBottomChatArea();
+            let token = decoder.decode(result.value);
+            // console.log(token);
+            if (token.includes("Sources")) {
+              // console.log("Start Sources", token);
+              document.getElementById("botResponse" + id).innerHTML += token;
+              return reader
+                .read()
+                .then(function processResultSources(sourceResult) {
+                  let tokenSource = decoder.decode(sourceResult.value);
+                  if (sourceResult.done) {
+                    document.getElementById("botResponse" + id).insertAdjacentHTML("beforeend", currentSource);
+                    currentSource = "";
+                    // console.log("End Source", tokenSource);
+                    scrollToBottomChatArea();
+                    return;
+                  } else {
+                    currentSource += tokenSource;
+                    if (currentSource.endsWith("</a>,")){
+                      document.getElementById("botResponse" + id).insertAdjacentHTML("beforeend", currentSource);
+                      currentSource = "";
+                    }
+                    // console.log("Source",tokenSource);
+                    return reader.read().then(processResultSources);
+                  }
+                });
+            }
+
+            if (
+              // token.endsWith(".") ||
+              token.endsWith("!") ||
+              token.endsWith("?") ||
+              token.endsWith("\n")
+            ) {
+              document.getElementById("botResponse" + id).innerHTML +=
+                token + "<br>";
+            } else {
+              document.getElementById("botResponse" + id).innerHTML += token;
+            }
+            scrollToBottomChatArea();
+            return reader.read().then(processResult);
+          });
+        }
+
+        function scrollToBottomChatArea() {
+          $("#chatArea").scrollTop($("#chatArea")[0].scrollHeight);
+        }
+
+
+        function typewriter() {
+          if (inc < botAnswer["answer"].length) {
+            document.getElementById("botResponse" + id).innerHTML +=
+              botAnswer["answer"].charAt(inc);
+            inc++;
+            scrollToBottomChatArea();
+            setTimeout(typewriter, 5);
+          } else if (botAnswer["sources"].length > 0) {
+            var sourceString =
+              "</br> Source: <a href='" +
+              botAnswer["sources"][0] +
+              "'> Confluence </a>";
+            var sourceString2 =
+              ", <a href='" + botAnswer["sources"][1] + "'> Github </a>";
+            document.getElementById("botResponse" + id).innerHTML +=
+              sourceString;
+            document.getElementById("botResponse" + id).innerHTML +=
+              sourceString2;
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
